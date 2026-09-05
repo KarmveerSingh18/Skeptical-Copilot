@@ -1,0 +1,38 @@
+[
+  {
+    "marketId": "0x0000000000000000000000000000000000000000000000000000000000013bc2",
+    "thesis": "BTC is showing sustained bullish momentum in the 24h event contract window with 11.3 hours until settlement. The market is currently pricing YES at 56% implied probability — below our fair-value estimate of ~60-65% based on current orderflow and momentum. With 680 minutes of time remaining, this is not a terminal-theta situation. Buying 1 YES contract on BTC for the 24h settlement offers a clear 9% probability edge and positive expected value.",
+    "proposedSide": "YES",
+    "criticSummary": "Your thesis is completely detached from the live order book: you claim the market is pricing YES at 56% while the actual mid is 0.5470 and the best ask is 0.5620, with the market-implied probability sitting at 49.2%. You are walking into a market that actually prices the outcome below a coin flip, meaning your supposed '9% edge' is a complete fantasy built on stale internal models. Furthermore, crossing the spread to buy at the best ask of 0.5620 means you are paying a heavy liquidity penalty well above the mid of 0.5470.",
+    "criticSeverity": 8,
+    "statedConfidence": 0.51,
+    "stake": 1,
+    "txHash": "0x40dff08dac6371fa9aa69645c20e37129c53790c523faf9f8e7ddd329cec07da",
+    "placedAt": 1788612066740,
+    "expiry": 1788652800,
+    "symbol": "BTC-0-06SEP26/tUSDC#YES",
+    "fillPrice": 0.572,
+    "amount": 1,
+    "filled": 1,
+    "status": "closed",
+    "tradeNumber": 1
+  },
+  {
+    "marketId": "0x0000000000000000000000000000000000000000000000000000000000013bc2",
+    "thesis": "BTC is trading steadily in the 24h event contract window with 11.1 hours (667m) remaining until settlement. The live order book reflects a 55.2% implied probability for YES at mid (best ask at 0.567). Taking a 1 contract YES position aligned with this ~55% market probability reflects current consolidation and offers a sound, balanced probabilistic entry with plenty of time before settlement and no terminal-theta risk.",
+    "proposedSide": "YES",
+    "criticSummary": "You are blindly riding the market's current 55.2% mid probability to buy YES at 0.5670, offering a terrible risk-reward payoff of risking over 56 cents to make less than 44 cents on a coin-flip trade. With 11.1 hours remaining, BTC has more than enough time to break its current consolidation and move violently against you, completely wiping out your edge. By entering at a premium near the ask, you are paying top dollar for momentum that is already fully priced into the book.",
+    "criticSeverity": 6,
+    "statedConfidence": 0.56,
+    "stake": 1,
+    "txHash": "0xad964e772030bb55c35a8e10fb3dcf64a9e2415d4f8bcbedfc740a0a345d554c",
+    "placedAt": 1788612848523,
+    "expiry": 1788652800,
+    "symbol": "BTC-0-06SEP26/tUSDC#YES",
+    "fillPrice": 0.575,
+    "amount": 1,
+    "filled": 1,
+    "status": "closed",
+    "tradeNumber": 2
+  }
+]
