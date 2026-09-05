@@ -47,20 +47,43 @@ export function appendTradeRecord(record, path = DEFAULT_LOG_PATH) {
 }
 
 /**
- * Update an existing TradeRecord by marketId (e.g. to fill in outcome after settlement).
- * @param {string} marketId - The market ID to update.
+ * Update an existing TradeRecord by tradeNumber.
+ * @param {number} tradeNumber - The sequential trade number to update.
  * @param {object} updates - Fields to merge into the existing record.
  * @param {string} [path] - Override path to the trades JSON file.
  * @returns {object|null} The updated record, or null if not found.
  */
-export function updateTradeRecord(marketId, updates, path = DEFAULT_LOG_PATH) {
+export function updateTradeRecordByNumber(tradeNumber, updates, path = DEFAULT_LOG_PATH) {
   const records = readTradeLog(path);
-  const idx = records.findIndex((r) => r.marketId === marketId);
+  const idx = records.findIndex((r) => r.tradeNumber === tradeNumber);
   if (idx === -1) return null;
 
   records[idx] = { ...records[idx], ...updates };
   writeFileSync(path, JSON.stringify(records, null, 2), "utf-8");
   return records[idx];
+}
+
+/**
+ * Update an existing TradeRecord by marketId (e.g. to fill in outcome after settlement).
+ * If multiple trades exist on the same marketId, updates all of them.
+ * @param {string} marketId - The market ID to update.
+ * @param {object} updates - Fields to merge into the existing record.
+ * @param {string} [path] - Override path to the trades JSON file.
+ * @returns {Array<object>} The updated records.
+ */
+export function updateTradeRecord(marketId, updates, path = DEFAULT_LOG_PATH) {
+  const records = readTradeLog(path);
+  const updated = [];
+  for (let i = 0; i < records.length; i++) {
+    if (records[i].marketId.toLowerCase() === marketId.toLowerCase()) {
+      records[i] = { ...records[i], ...updates };
+      updated.push(records[i]);
+    }
+  }
+  if (updated.length > 0) {
+    writeFileSync(path, JSON.stringify(records, null, 2), "utf-8");
+  }
+  return updated.length === 1 ? updated[0] : (updated.length > 0 ? updated : null);
 }
 
 /**
