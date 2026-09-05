@@ -34,5 +34,23 @@
     "filled": 1,
     "status": "closed",
     "tradeNumber": 2
+  },
+  {
+    "marketId": "0x0000000000000000000000000000000000000000000000000000000000013bc2",
+    "thesis": "BTC is likely to continue in its current 24-hour trend. Taking a 1 YES contract position aligned with the market's current consensus probability reflects a sound, low-risk entry given the ample time remaining before settlement.",
+    "proposedSide": "YES",
+    "criticSummary": "Your thesis relies on the naïve assumption that a 24-hour trend will simply persist because it has so far, ignoring the fact that the market is already pricing in a 55.3% probability of an upside close based on the current book mid of 0.5565. You are chasing a consensus trade where the 'trend continuation' is already heavily factored into the price, leaving you vulnerable to a sharp mean-reversion trap. Buying YES at 0.5620 (best ask) gives you a terrible risk-reward ratio given that over 200 minutes remain for volatility to completely wipe out today's gains.",
+    "criticSeverity": 6,
+    "statedConfidence": 0.57,
+    "stake": 1,
+    "txHash": "0x83ce17bf67c0227c9ac20ef3d722380f1d7a0f07c4488800be79bfb9db78e6fd",
+    "placedAt": 1788640553233,
+    "expiry": 1788652800,
+    "symbol": "BTC-0-06SEP26-3BC2/tUSDC#YES",
+    "fillPrice": 0.554,
+    "amount": 1,
+    "filled": 1,
+    "status": "closed",
+    "tradeNumber": 3
   }
 ]
