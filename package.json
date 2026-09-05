@@ -4,6 +4,7 @@
   "type": "module",
   "description": "Skeptical Copilot + Calibration Tracker — DreamDEX Hackathon",
   "scripts": {
+    "start": "node src/server.js",
     "test:faucet": "node scripts/test-faucet.mjs",
     "test:trade": "node scripts/test-trade.mjs",
     "test:resolution": "node scripts/test-resolution.mjs",
@@ -13,6 +14,7 @@
   "dependencies": {
     "@google/genai": "^2.21.0",
     "@somnia-chain/markets-sdk": "^0.29.0",
+    "express": "^5.2.1",
     "viem": "^2.56.3"
   }
 }

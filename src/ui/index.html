@@ -1,0 +1,142 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>SKEPTICAL COPILOT — Adversarial Trading Dashboard</title>
+  <meta name="description" content="AI trading agent that argues with itself before every trade, backed by real settlement calibration data.">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@300;400;500;600;700&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+  <!-- ─── HEADER ─────────────────────────────────────────────────────── -->
+  <header id="header">
+    <div class="header-left">
+      <span class="header-title">SKEPTICAL COPILOT</span>
+      <span class="header-sep">|</span>
+      <span class="header-subtitle">adversarial event-contract trading</span>
+    </div>
+    <div class="header-right">
+      <div class="header-stat" id="stat-brier">
+        <span class="stat-label">BRIER</span>
+        <span class="stat-value" id="header-brier">—</span>
+      </div>
+      <div class="header-stat" id="stat-trades">
+        <span class="stat-label">TRADES</span>
+        <span class="stat-value" id="header-trades">—</span>
+      </div>
+      <div class="header-stat" id="stat-winrate">
+        <span class="stat-label">WIN RATE</span>
+        <span class="stat-value" id="header-winrate">—</span>
+      </div>
+      <div class="header-stat" id="stat-connection">
+        <span class="stat-label">SDK</span>
+        <span class="stat-value" id="header-connection">
+          <span class="dot dot-pending"></span>
+        </span>
+      </div>
+    </div>
+  </header>
+
+  <!-- ─── MAIN GRID ──────────────────────────────────────────────────── -->
+  <main id="dashboard">
+
+    <!-- LEFT: THESIS INPUT -->
+    <section id="panel-thesis" class="panel">
+      <div class="panel-header">
+        <span class="panel-tag">INPUT</span>
+        <h2>THESIS</h2>
+      </div>
+      <div class="panel-body">
+        <textarea
+          id="thesis-input"
+          placeholder="Enter your trade thesis...&#10;&#10;e.g. &quot;BTC will close above the current strike in the next 1h window. The order book is pricing YES at ~55% but momentum favors continuation to ~60%. Buy 1 YES contract.&quot;"
+          rows="8"
+          spellcheck="false"
+        ></textarea>
+        <button id="btn-submit" class="btn-primary" onclick="submitThesis()">
+          <span class="btn-icon">▶</span> SUBMIT THESIS
+        </button>
+        <div id="thesis-status" class="status-bar hidden"></div>
+
+        <!-- Market info strip (populated after thesis submission) -->
+        <div id="market-info" class="market-info hidden">
+          <div class="info-row">
+            <span class="info-label">MARKET</span>
+            <span class="info-value" id="mi-symbol">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">EXPIRY</span>
+            <span class="info-value" id="mi-expiry">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">MID</span>
+            <span class="info-value" id="mi-mid">—</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">BID / ASK</span>
+            <span class="info-value" id="mi-spread">—</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- CENTER: REASONING TRAIL -->
+    <section id="panel-reasoning" class="panel">
+      <div class="panel-header">
+        <span class="panel-tag">ANALYSIS</span>
+        <h2>REASONING TRAIL</h2>
+      </div>
+      <div class="panel-body" id="reasoning-body">
+        <div class="empty-state">
+          <span class="empty-icon">⚖</span>
+          <p>Submit a thesis to start the adversarial analysis pipeline.</p>
+          <p class="empty-sub">Parse → Critique → Synthesize</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- RIGHT: POSITIONS -->
+    <section id="panel-positions" class="panel">
+      <div class="panel-header">
+        <span class="panel-tag">BOOK</span>
+        <h2>POSITIONS</h2>
+        <button class="btn-small" onclick="loadTrades()" title="Refresh positions">↻</button>
+      </div>
+      <div class="panel-body" id="positions-body">
+        <div class="empty-state">
+          <span class="empty-icon">◇</span>
+          <p>No trades recorded yet.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- BOTTOM: CALIBRATION -->
+    <section id="panel-calibration" class="panel panel-full">
+      <div class="panel-header">
+        <span class="panel-tag">ACCOUNTABILITY</span>
+        <h2>CALIBRATION</h2>
+        <button class="btn-small btn-accent" onclick="pollSettlement()">POLL SETTLEMENT</button>
+        <button class="btn-small" onclick="loadCalibration()" title="Refresh calibration">↻</button>
+      </div>
+      <div class="panel-body calibration-grid">
+        <div class="calibration-chart-wrap">
+          <canvas id="calibration-chart" width="480" height="280"></canvas>
+        </div>
+        <div class="calibration-stats" id="calibration-stats">
+          <div class="empty-state">
+            <span class="empty-icon">◈</span>
+            <p>Calibration data will appear after trades settle.</p>
+          </div>
+        </div>
+      </div>
+    </section>
+
+  </main>
+
+  <script src="app.js"></script>
+</body>
+</html>
