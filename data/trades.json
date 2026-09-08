@@ -15,7 +15,9 @@
     "amount": 1,
     "filled": 1,
     "status": "closed",
-    "tradeNumber": 1
+    "tradeNumber": 1,
+    "outcome": 1,
+    "resolvedAt": 1788652801000
   },
   {
     "marketId": "0x0000000000000000000000000000000000000000000000000000000000013bc2",
@@ -33,7 +35,9 @@
     "amount": 1,
     "filled": 1,
     "status": "closed",
-    "tradeNumber": 2
+    "tradeNumber": 2,
+    "outcome": 1,
+    "resolvedAt": 1788652801000
   },
   {
     "marketId": "0x0000000000000000000000000000000000000000000000000000000000013bc2",
@@ -51,6 +55,8 @@
     "amount": 1,
     "filled": 1,
     "status": "closed",
-    "tradeNumber": 3
+    "tradeNumber": 3,
+    "outcome": 1,
+    "resolvedAt": 1788652801000
   }
 ]
