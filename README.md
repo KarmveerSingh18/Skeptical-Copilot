@@ -4,8 +4,7 @@
 
 Built for the Somnia × DreamDEX Event Contracts Hackathon.
 
-[Demo video →](PASTE_DEMO_VIDEO_LINK_HERE) · [Live dashboard →](PASTE_DEPLOYMENT_LINK_IF_ANY) · [Verify our claims yourself ↓](#verify-it-yourself)
-
+[Demo video →](https://www.youtube.com/watch?v=rHqdS9vkVu8) · [Live dashboard →](https://skeptical-copilot.onrender.com) · [Verify our claims yourself ↓](#verify-it-yourself)
 ---
 
 ## The problem
