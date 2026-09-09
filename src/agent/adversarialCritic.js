@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { generateContentWithRetry } from "./geminiRetry.js";
+import { buildOutcomeContext } from "./outcomeSemantics.js";
 
 /**
  * Adversarial Critic system prompt.
@@ -51,6 +52,12 @@ Example 2:
 Proposal: ETH bullish, wants to buy YES. Market lastPrice=748000 (74.8% YES).
 Counter: { "counterArgument": "You're buying YES at 75 cents — the market already prices a 75% chance ETH ends above the strike. You need ETH to close higher, but you're paying 3:1 for what the market considers a likely outcome. The upside is only 25 cents per share while the downside is 75 cents. You're arriving late to a consensus trade.", "riskFactors": ["Buying at 75% means risking 75 cents to gain 25 — asymmetric downside", "High implied probability means the 'easy money' is already priced in", "Any unexpected dip will cause outsized losses vs. potential gain"], "marketAlignedAgainst": false, "impliedProbability": 0.748, "severityScore": 6 }
 
+IMPORTANT: Pay close attention to the OUTCOME SEMANTICS section in the prompt — it
+tells you exactly what YES and NO mean for this specific market's binary question.
+Do NOT assume or invert these meanings. A bearish thesis buying NO is internally
+consistent when the market question is "Will X settle above Y?" — NO means the
+price ends BELOW the strike, which IS the bearish outcome.
+
 Respond ONLY with a single JSON object. Never include markdown fences or commentary.`;
 
 /**
@@ -95,6 +102,14 @@ export async function critiqueProposal(proposal, bookState, options = {}) {
   const remainingSec = matched.remainingSec;
   const remainingMin = Math.round(remainingSec / 60);
 
+  // Build market-grounded outcome semantics to prevent YES/NO inversion
+  const outcomeContext = buildOutcomeContext({
+    asset: parsed.asset,
+    strike: matched.strike ?? parsed.strike,
+    recommendedSide,
+    direction: parsed.direction,
+  });
+
   const userPrompt = `PROPOSED TRADE TO ATTACK:
 - Thesis: "${parsed.rawThesis}"
 - Asset: ${parsed.asset}
@@ -102,6 +117,9 @@ export async function critiqueProposal(proposal, bookState, options = {}) {
 - Proposed Side: ${recommendedSide} (buying ${recommendedSide} outcome tokens)
 - Strike: ${parsed.strike ?? "N/A (at-the-money / no explicit strike)"}
 - Stake: ${parsed.stake ?? "not specified"} tUSDC
+
+OUTCOME SEMANTICS (read carefully — do NOT invert these meanings):
+${outcomeContext}
 
 MATCHED MARKET:
 - Symbol: ${matched.symbol}

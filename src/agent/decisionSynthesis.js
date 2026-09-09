@@ -1,5 +1,6 @@
 import { GoogleGenAI } from "@google/genai";
 import { generateContentWithRetry } from "./geminiRetry.js";
+import { buildOutcomeContext } from "./outcomeSemantics.js";
 
 /**
  * Decision Synthesis system prompt.
@@ -27,8 +28,9 @@ Key Decision Rules:
   When the thesis aligns with market conditions, has sufficient time before expiry (not a terminal theta decay trap), and takes a reasonable probabilistic position without hallucinating impossible edges, approve the trade (proceed: true) and express your true calibrated outcome probability in statedConfidence.
   Remember: trading is inherently probabilistic — a valid thesis does not require certainty or an inflated edge to be tradeable; a sensible, well-grounded thesis with manageable downside should be approved. Decline (proceed: false) when the critique identifies fatal, unmanaged risks (e.g. trading directly against extreme adverse odds with no time left, severe spread penalty, or factual contradiction with the live book).
 - side: "YES" or "NO" — the side you recommend if proceeding (even if proceed
-  is false, state which side you would have taken). This must match the direction
-  logic: "up" → YES, "down" → NO.
+  is false, state which side you would have taken). This must match the
+  OUTCOME SEMANTICS provided in the prompt — refer to that section to
+  understand what YES and NO mean for this specific market question.
 - statedConfidence: number between 0.50 and 0.99 — the probability you assign to
   the PREDICTED SIDE (the 'side' field above) actually winning this specific
   binary market. This is NOT your confidence in your analysis — it's your
@@ -43,6 +45,12 @@ Key Decision Rules:
   which parts of the critique you found compelling or dismissed, and why.
   If proceeding, state what edge or probabilistic justification exists despite the critique.
   If declining, state which risk factor(s) tipped the balance.
+
+IMPORTANT: Pay close attention to the OUTCOME SEMANTICS section — it tells you
+exactly what YES and NO mean for this specific market's binary question. A bearish
+thesis buying NO is internally consistent when the market asks "Will X settle
+above Y?" — NO means price ends BELOW the strike, which IS the bearish outcome.
+Do NOT flag this as a contradiction.
 
 Respond ONLY with a single JSON object. Never include markdown fences or commentary.`;
 
@@ -91,6 +99,14 @@ export async function synthesizeDecision(proposal, critique, options = {}) {
 
   const effectiveProb = sideMid ?? sideLastPrice;
 
+  // Build market-grounded outcome semantics to prevent YES/NO inversion
+  const outcomeContext = buildOutcomeContext({
+    asset: parsed.asset,
+    strike: matched.strike ?? parsed.strike,
+    recommendedSide,
+    direction: parsed.direction,
+  });
+
   const userPrompt = `TRADE PROPOSAL:
 - Thesis: "${parsed.rawThesis}"
 - Asset: ${parsed.asset}
@@ -104,6 +120,9 @@ export async function synthesizeDecision(proposal, critique, options = {}) {
 - Best Bid for ${recommendedSide}: ${sideBestBid !== null ? sideBestBid.toFixed(4) : "none"}
 - Best Ask for ${recommendedSide}: ${sideBestAsk !== null ? sideBestAsk.toFixed(4) : "none"}
 - Mid Price for ${recommendedSide}: ${sideMid !== null ? sideMid.toFixed(4) : "N/A"}
+
+OUTCOME SEMANTICS (read carefully — do NOT invert these meanings):
+${outcomeContext}
 
 ADVERSARIAL CRITIQUE (severity ${critique.severityScore ?? "??"}/10):
 "${critique.counterArgument}"
