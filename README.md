@@ -86,11 +86,11 @@ A terminal/war-room aesthetic, deliberately — no rounded logo mark, no blue/pu
 *The three-stage pipeline organically recommending `PROCEED` (57.0% stated confidence) with the active `APPROVE` / `REJECT` confirm gate buttons awaiting human authorization before executing on-chain.*
 
 ### 2. Adversarial Critique & Data-Grounded Decline
-![Adversarial Critique and Decline Verdict](docs/screenshots/Screenshot%202.png)
+![Adversarial Critique and Decline Verdict](docs/screenshots/Screenshot%203.png)
 *The adversarial critic (7/10 severity) and synthesis judge correctly declining a flawed thesis due to an unfavorable bid-ask spread and theta decay, displaying the full reasoning rather than executing blindly.*
 
 ### 3. Accountability & Reliability Calibration
-![Calibration Chart and Reliability Breakdown](docs/screenshots/Screenshot%203.png)
+![Calibration Chart and Reliability Breakdown](docs/screenshots/Screenshot%202.png)
 *Running calibration dashboard tracking our 3 settled on-chain trades, displaying an overall Brier score of `0.2062` (100% win rate), reliability diagram, and confidence bucket breakdown computed exclusively from our verified trade records.*
 
 - **Reasoning Trail** — the three pipeline stages render progressively as they complete, each with real latency shown, culminating in a clear PROCEED/DECLINE verdict with an APPROVE/REJECT confirm gate.
