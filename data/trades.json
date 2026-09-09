@@ -58,5 +58,23 @@
     "tradeNumber": 3,
     "outcome": 1,
     "resolvedAt": 1788652801000
+  },
+  {
+    "marketId": "0x0000000000000000000000000000000000000000000000000000000000018407",
+    "thesis": "I favor UP. BTC is holding above the opening reference price, and with the remaining time to settlement, I see the probability of a reversal below the reference level as very low. The current price action remains consistent with an UP settlement. I estimate a 99.5% probability of UP settling in the money, and the current executable price still offers a small positive edge.",
+    "proposedSide": "YES",
+    "criticSummary": "You claim a 99.5% probability of an UP settlement, yet the market mid-price for YES sits at 0.6425, implying just a 60.5% probability. You are asserting a massive 39% edge against the collective book where the best ask is 0.6570, meaning you are ignoring the substantial risk of a 1-hour crypto mean-reversion move that could easily breach the opening reference price with 45 minutes remaining.",
+    "criticSeverity": 7,
+    "statedConfidence": 0.95,
+    "stake": 1,
+    "txHash": "0x9f3b8fb67b191b863d13b929fc4ce41290024e2c33408befd26e1369e55e3251",
+    "placedAt": 1788974138636,
+    "expiry": 1788976800,
+    "symbol": "BTC-0-09SEP26-1800/tUSDC#YES",
+    "fillPrice": 0.633,
+    "amount": 1,
+    "filled": 1,
+    "status": "closed",
+    "tradeNumber": 4
   }
 ]

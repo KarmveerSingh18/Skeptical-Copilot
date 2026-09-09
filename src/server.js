@@ -137,13 +137,66 @@ app.post("/api/pipeline/confirm", async (req, res) => {
     const { trailData } = state;
     const { parsed, matched, recommendedSide, decision } = trailData;
 
-    // ─── Execute Order ────────────────────────────────────────────────
+    // ─── Refresh Market Registry ──────────────────────────────────────
+    // The singleton exchange's market registry may be stale — Event
+    // Contract markets rotate/expire on testnet while the page is open.
+    // Force a full reload so the symbol registry is current.
+    await ex.loadMarkets(true);
+
+    // ─── Build Tradable Symbol ────────────────────────────────────────
     const targetSide = decision.side || recommendedSide || "YES";
     const tradableSymbol =
       targetSide === "NO"
         ? matched.symbol.replace(/#YES$/i, "#NO")
         : matched.symbol.replace(/#NO$/i, "#YES");
 
+    // ─── Validate Symbol Exists in Registry ───────────────────────────
+    // After reloading, verify the tradable symbol is known to the SDK.
+    // If the market expired/rotated while the user reviewed the
+    // reasoning trail, fail safely instead of submitting a stale order.
+    let tradable;
+    try {
+      tradable = ex.market(tradableSymbol);
+    } catch {
+      return res.status(409).json({
+        error:
+          `Market no longer available: "${tradableSymbol}". ` +
+          `The Event Contract may have expired or rotated while you ` +
+          `reviewed the reasoning trail. Please re-submit your thesis ` +
+          `to discover the current market.`,
+      });
+    }
+
+    // ─── Verify Market Is Still Tradable ──────────────────────────────
+    // Check that the on-chain market has not settled or been voided.
+    const marketInfo = ex.markets[tradable.marketSymbol];
+    if (marketInfo && marketInfo.active === false) {
+      return res.status(409).json({
+        error:
+          `Market "${tradable.marketSymbol}" is no longer active ` +
+          `(status: ${marketInfo.status || "inactive"}). ` +
+          `The contract may have settled or been voided. ` +
+          `Please re-submit your thesis.`,
+      });
+    }
+
+    // ─── Check Expiry ─────────────────────────────────────────────────
+    if (marketInfo && marketInfo.expiry) {
+      const nowSec = Math.floor(Date.now() / 1000);
+      const expirySec = typeof marketInfo.expiry === "bigint"
+        ? Number(marketInfo.expiry)
+        : Number(marketInfo.expiry);
+      if (expirySec <= nowSec) {
+        return res.status(409).json({
+          error:
+            `Market "${tradable.marketSymbol}" has expired ` +
+            `(expiry: ${new Date(expirySec * 1000).toISOString()}). ` +
+            `Please re-submit your thesis to discover the current market.`,
+        });
+      }
+    }
+
+    // ─── Execute Order ────────────────────────────────────────────────
     const placed = await ex.createOrder(
       tradableSymbol,
       "market",

@@ -51,6 +51,17 @@ export async function findMatchingMarket(exchange, parsed, options = {}) {
     };
   }
 
+  // Refresh the exchange's symbol registry so newly-rotated markets are known.
+  // listLiveBinaryMarkets() queries live data, but exchange.market() resolves
+  // against the cached registry — without a reload, any market that appeared
+  // after boot will miss and fall through to the manual symbol format, which
+  // may not exactly match what loadMarkets() would produce.
+  try {
+    await exchange.loadMarkets(true);
+  } catch {
+    // Non-fatal: the fallback symbol builder below still works
+  }
+
   // Ensure exchange has freshly registered markets if any new markets appeared
   const resolveTradableSymbol = (m) => {
     try {
