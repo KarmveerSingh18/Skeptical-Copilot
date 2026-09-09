@@ -10,7 +10,7 @@ import { buildOutcomeContext } from "./outcomeSemantics.js";
  * assistant that hedges — it is an advocate for the *opposite* side of the
  * trade, instructed to attack the thesis as hard as it can.
  */
-const CRITIC_SYSTEM_INSTRUCTION = `You are a hostile, adversarial trading risk analyst.
+const CRITIC_SYSTEM_INSTRUCTION = `You are a hostile, adversarial trading risk analyst for DreamDEX Event Contracts.
 Your ONLY job is to construct the strongest possible argument AGAINST a proposed
 event-contract trade. You are NOT a balanced advisor — you are the devil's
 advocate retained specifically to find every reason this trade will fail.
@@ -19,6 +19,7 @@ You will be given:
 1. A proposed trade thesis (what the trader believes will happen).
 2. The matched market details (symbol, expiry, interval, implied YES probability).
 3. Current order-book state (best bid/ask/mid if available, last trade price).
+4. STRUCTURED MARKET & OUTCOME CONTEXT (openingPrice, outcome, settlementCondition, boundary rules).
 
 Your output MUST be a JSON object with these fields:
 - counterArgument: A 2-4 sentence aggressive counter-thesis. Attack the logic,
@@ -52,11 +53,15 @@ Example 2:
 Proposal: ETH bullish, wants to buy YES. Market lastPrice=748000 (74.8% YES).
 Counter: { "counterArgument": "You're buying YES at 75 cents — the market already prices a 75% chance ETH ends above the strike. You need ETH to close higher, but you're paying 3:1 for what the market considers a likely outcome. The upside is only 25 cents per share while the downside is 75 cents. You're arriving late to a consensus trade.", "riskFactors": ["Buying at 75% means risking 75 cents to gain 25 — asymmetric downside", "High implied probability means the 'easy money' is already priced in", "Any unexpected dip will cause outsized losses vs. potential gain"], "marketAlignedAgainst": false, "impliedProbability": 0.748, "severityScore": 6 }
 
-IMPORTANT: Pay close attention to the OUTCOME SEMANTICS section in the prompt — it
-tells you exactly what YES and NO mean for this specific market's binary question.
-Do NOT assume or invert these meanings. A bearish thesis buying NO is internally
-consistent when the market question is "Will X settle above Y?" — NO means the
-price ends BELOW the strike, which IS the bearish outcome.
+IMPORTANT EVENT CONTRACT SEMANTIC RULES:
+1. Pay close attention to the STRUCTURED MARKET & OUTCOME CONTEXT in the prompt.
+2. In DreamDEX Event Contracts, binary markets resolve based on:
+   - UP / YES: settlementPrice >= openingPrice (or strike)
+   - DOWN / NO: settlementPrice < openingPrice (or strike)
+3. "DOWN" (NO) means ONLY that the settlement price ends BELOW the opening price or strike.
+4. "DOWN" does NOT mean the asset price drops to zero ($0) or suffers an existential collapse. There is NO zero strike.
+5. When criticizing a DOWN / NO proposal, reason about the probability of the price crossing back above the opening price / strike boundary before expiry. NEVER claim or assume that a bearish thesis requires or predicts the asset to drop to $0.
+6. A bearish thesis buying NO is internally consistent when predicting settlementPrice < openingPrice. Do NOT claim NO means going UP.
 
 Respond ONLY with a single JSON object. Never include markdown fences or commentary.`;
 
@@ -102,10 +107,12 @@ export async function critiqueProposal(proposal, bookState, options = {}) {
   const remainingSec = matched.remainingSec;
   const remainingMin = Math.round(remainingSec / 60);
 
-  // Build market-grounded outcome semantics to prevent YES/NO inversion
+  // Build market-grounded structured outcome semantics
   const outcomeContext = buildOutcomeContext({
     asset: parsed.asset,
     strike: matched.strike ?? parsed.strike,
+    openingPrice: parsed.openingPrice ?? (matched.strike && matched.strike !== "0" && matched.strike !== 0 ? matched.strike : null),
+    currentPrice: parsed.currentPrice ?? null,
     recommendedSide,
     direction: parsed.direction,
   });
@@ -115,10 +122,9 @@ export async function critiqueProposal(proposal, bookState, options = {}) {
 - Asset: ${parsed.asset}
 - Direction: ${parsed.direction} (user expects price to go ${parsed.direction})
 - Proposed Side: ${recommendedSide} (buying ${recommendedSide} outcome tokens)
-- Strike: ${parsed.strike ?? "N/A (at-the-money / no explicit strike)"}
+- Strike: ${parsed.strike ?? "N/A (at-the-money / reference opening price)"}
 - Stake: ${parsed.stake ?? "not specified"} tUSDC
 
-OUTCOME SEMANTICS (read carefully — do NOT invert these meanings):
 ${outcomeContext}
 
 MATCHED MARKET:
@@ -134,7 +140,7 @@ CURRENT BOOK STATE (For proposed ${recommendedSide} tokens):
 - Mid for ${recommendedSide}: ${sideMid !== null ? sideMid.toFixed(4) : "N/A"}
 (Underlying contract YES probability: ${lastPriceNum !== null ? `${(lastPriceNum * 100).toFixed(1)}%` : "N/A"})
 
-Construct your strongest argument against this trade. Be specific and cite the numbers above.`;
+Construct your strongest argument against this trade. Reason about boundary crossing (settlementPrice vs openingPrice/strike), not price collapse to zero. Be specific and cite the numbers above.`;
 
   const response = await generateContentWithRetry(ai, {
     model,

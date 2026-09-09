@@ -263,10 +263,14 @@ function renderReasoningTrail(result) {
 
   // Stage 3: Synthesis + Decision
   if (trail.synthesis) {
-    const s = trail.synthesis.output;
+    const s = trail.synthesis.output || {};
     const proceeds = s.proceed === true;
     const verdict = proceeds ? "PROCEED" : "DECLINE";
     const verdictClass = proceeds ? "proceed" : "decline";
+    const edgeVal = s.edge ?? s.estimatedEdge;
+    const edgeFormatted = edgeVal != null
+      ? `${edgeVal >= 0 ? "+" : ""}${(edgeVal * 100).toFixed(1)}%`
+      : "—";
 
     html += buildStageBlock({
       num: "03",
@@ -287,7 +291,7 @@ function renderReasoningTrail(result) {
             </div>
             <div class="decision-meta-item">
               <span class="decision-meta-label">EDGE</span>
-              <span class="decision-meta-value">${s.estimatedEdge != null ? (s.estimatedEdge * 100).toFixed(1) + "%" : "—"}</span>
+              <span class="decision-meta-value">${edgeFormatted}</span>
             </div>
           </div>
           <div class="decision-reasoning">${escapeHtml(s.reasoning || "")}</div>

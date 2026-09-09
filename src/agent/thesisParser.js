@@ -10,9 +10,9 @@ Your only job is to extract structured trading parameters from free-form user st
 
 You must extract the following fields:
 - asset: The underlying asset ticker in uppercase (e.g., "BTC", "ETH", "SOL"). If no asset can be determined, return null.
-- direction: The predicted direction relative to the strike or current level:
-  - "up": Bullish outcome (expects price to rise, hold above, pump, break higher, YES on above-strike).
-  - "down": Bearish outcome (expects price to drop, fail to hold, dump, break lower, crash, NO on above-strike).
+- direction: The predicted direction relative to the strike or opening level:
+  - "up": Bullish outcome (expects price to rise, hold above opening/strike, pump, break higher, YES on above-strike/opening).
+  - "down": Bearish outcome (expects price to drop, fail to hold, stay below opening/strike, dump, break lower, crash, NO on above-strike/opening).
   - If ambiguous or indeterminate, return null.
 - targetTimeframe: The user's explicit or implicit timeframe as phrased (e.g. "15m", "1 hour", "by Friday", "end of day", "next 5 minutes"). If NO timeframe is specified or implied, return null.
 - targetSeconds: Estimated duration in seconds from now until the target expiry if inferrable:
@@ -25,6 +25,8 @@ You must extract the following fields:
   - "by Friday" -> estimate based on days until Friday (or null if context is insufficient)
   - If unspecified or completely open-ended, return null.
 - strike: Numeric price target or strike level mentioned (e.g. 65000, 2800), or null if not mentioned.
+- openingPrice: Numeric opening price or reference level mentioned (e.g. 65000 in "below the opening price of 65000"), or null if not mentioned.
+- currentPrice: Numeric current price mentioned (e.g. 64200 in "BTC is currently at 64200"), or null if not mentioned.
 - stake: Numeric position size or dollar amount to risk if mentioned (e.g. 10, 50), or null if not mentioned.
 - confidence: Stated confidence percentage (0 to 1) if mentioned, or null.
 - ambiguityNotes: A short string explaining any missing or ambiguous fields (e.g. "No timeframe provided", "No stake specified"), or null if clear.
@@ -40,6 +42,8 @@ Output:
   "targetTimeframe": "by Friday",
   "targetSeconds": 172800,
   "strike": 65000,
+  "openingPrice": null,
+  "currentPrice": null,
   "stake": null,
   "confidence": null,
   "ambiguityNotes": "Specific strike $65,000 and target day stated; stake unspecified."
@@ -54,23 +58,27 @@ Output:
   "targetTimeframe": "next 15 minutes",
   "targetSeconds": 900,
   "strike": 2800,
+  "openingPrice": null,
+  "currentPrice": null,
   "stake": 25,
   "confidence": null,
   "ambiguityNotes": null
 }
 
 Example 3:
-Input: "Ethereum is definitely heading down today"
+Input: "BTC is at 64200 below the opening price of 65000 and I expect it to stay below for the next 15 minutes"
 Output:
 {
-  "asset": "ETH",
+  "asset": "BTC",
   "direction": "down",
-  "targetTimeframe": "today",
-  "targetSeconds": 43200,
+  "targetTimeframe": "next 15 minutes",
+  "targetSeconds": 900,
   "strike": null,
+  "openingPrice": 65000,
+  "currentPrice": 64200,
   "stake": null,
   "confidence": null,
-  "ambiguityNotes": "No strike price or stake specified; broad intraday timeframe."
+  "ambiguityNotes": null
 }
 
 Example 4:
@@ -82,6 +90,8 @@ Output:
   "targetTimeframe": null,
   "targetSeconds": null,
   "strike": null,
+  "openingPrice": null,
+  "currentPrice": null,
   "stake": null,
   "confidence": null,
   "ambiguityNotes": "Deliberately ambiguous: no timeframe, no strike, no stake specified."
@@ -144,6 +154,8 @@ export async function parseThesis(thesisText, options = {}) {
     targetTimeframe: parsed.targetTimeframe ?? null,
     targetSeconds: typeof parsed.targetSeconds === "number" ? parsed.targetSeconds : null,
     strike: typeof parsed.strike === "number" ? parsed.strike : null,
+    openingPrice: typeof parsed.openingPrice === "number" ? parsed.openingPrice : null,
+    currentPrice: typeof parsed.currentPrice === "number" ? parsed.currentPrice : null,
     stake: typeof parsed.stake === "number" ? parsed.stake : null,
     confidence: typeof parsed.confidence === "number" ? parsed.confidence : null,
     ambiguityNotes: parsed.ambiguityNotes ?? null,

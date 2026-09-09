@@ -1,46 +1,95 @@
 /**
  * Outcome Semantics Helper
  *
- * Generates human-readable context strings that explain what YES and NO mean
- * for a specific binary market question, grounded in the market's actual
- * metadata (asset, strike).
+ * Generates structured and human-readable context explaining what YES and NO
+ * (UP and DOWN) mean for DreamDEX Event Contracts, grounded in the market's
+ * actual metadata (asset, strike, openingPrice, currentPrice).
  *
- * This eliminates the ambiguity that caused the adversarial critic to invert
- * YES/NO semantics (e.g. claiming "NO means BTC goes UP").
+ * Semantic Definitions:
+ * - UP / YES:   settlementPrice >= openingPrice (or strike)
+ * - DOWN / NO:  settlementPrice < openingPrice (or strike)
+ *
+ * Boundary Rules:
+ * - "DOWN" means strictly that the settlement price ends BELOW the opening price (or strike).
+ * - "DOWN" is NOT a zero-strike outcome and does NOT mean the asset price collapses to zero ($0).
+ * - Agents must reason about the probability of crossing the opening price boundary,
+ *   never inferring a target price of zero from the word DOWN.
  */
 
 /**
- * Build a clear, unambiguous description of what YES and NO mean for this
- * specific binary market, plus how the proposed side maps to the trader's
- * directional thesis.
+ * Build a structured and unambiguous description of what YES/NO and UP/DOWN mean
+ * for this specific binary event contract, including explicit structured fields.
  *
  * @param {object} params
  * @param {string} params.asset - e.g. "BTC", "ETH"
- * @param {string|number|null} params.strike - e.g. 65000, or null for at-the-money
+ * @param {string|number|null} [params.strike] - e.g. 65000, or null / 0 for reference-mode
+ * @param {string|number|null} [params.openingPrice] - Opening/reference price if known
+ * @param {string|number|null} [params.currentPrice] - Current asset price if known
  * @param {string} params.recommendedSide - "YES" or "NO"
  * @param {string} params.direction - "up" or "down" (from parsed thesis)
- * @returns {string} Human-readable outcome semantics block for LLM prompts
+ * @returns {string} Structured outcome semantics block for LLM prompts
  */
-export function buildOutcomeContext({ asset, strike, recommendedSide, direction }) {
-  const strikeLabel = strike != null ? String(strike) : "the opening/reference level";
-  const marketQuestion = `Will ${asset} settle above ${strikeLabel}?`;
+export function buildOutcomeContext({
+  asset,
+  strike = null,
+  openingPrice = null,
+  currentPrice = null,
+  recommendedSide,
+  direction,
+}) {
+  const isDown = recommendedSide === "NO" || direction === "down";
+  const outcome = isDown ? "DOWN" : "UP";
 
-  const yesDesc = `YES = price ends ABOVE ${strikeLabel} (bullish outcome)`;
-  const noDesc = `NO = price ends BELOW ${strikeLabel} (bearish outcome)`;
+  // Determine reference boundary description and value
+  const hasNumericStrike = strike != null && strike !== 0 && strike !== "0" && !isNaN(Number(strike));
+  const hasNumericOpening = openingPrice != null && !isNaN(Number(openingPrice));
 
-  const sideExplanation = recommendedSide === "NO"
-    ? `The proposed side is NO, meaning the trader expects a BEARISH outcome (${asset} settles BELOW ${strikeLabel}).`
-    : `The proposed side is YES, meaning the trader expects a BULLISH outcome (${asset} settles ABOVE ${strikeLabel}).`;
+  let refBoundaryLabel;
+  let openingPriceField;
 
-  const directionCheck = direction === "down"
-    ? `The trader's thesis is bearish (direction: down). This is consistent with buying NO — both predict the price will end below the strike.`
-    : `The trader's thesis is bullish (direction: up). This is consistent with buying YES — both predict the price will end above the strike.`;
+  if (hasNumericOpening) {
+    refBoundaryLabel = String(openingPrice);
+    openingPriceField = String(openingPrice);
+  } else if (hasNumericStrike) {
+    refBoundaryLabel = String(strike);
+    openingPriceField = `${strike} (fixed strike)`;
+  } else {
+    refBoundaryLabel = "openingPrice";
+    openingPriceField = "openingPrice (set at market open / reference level)";
+  }
+
+  const settlementCondition = isDown
+    ? `settlementPrice < ${refBoundaryLabel}`
+    : `settlementPrice >= ${refBoundaryLabel}`;
+
+  const marketQuestion = `Will ${asset} settle above ${refBoundaryLabel}?`;
+
+  const structuredFields = [
+    `- asset: ${asset}`,
+    `- openingPrice: ${openingPriceField}`,
+    currentPrice != null ? `- currentPrice: ${currentPrice}` : null,
+    `- outcome: ${outcome}`,
+    `- side: ${recommendedSide}`,
+    `- settlementCondition: "${settlementCondition}"`,
+  ].filter(Boolean).join("\n");
+
+  const rules = [
+    `SEMANTIC DEFINITIONS (DreamDEX Event Contracts):`,
+    `  • UP / YES: settlementPrice >= ${refBoundaryLabel} (settles at or above opening/reference level)`,
+    `  • DOWN / NO: settlementPrice < ${refBoundaryLabel} (settles below opening/reference level)`,
+    ``,
+    `CRITICAL BOUNDARY & RISK REASONING RULES:`,
+    `  1. "DOWN" in DreamDEX Event Contracts means ONLY that settlementPrice < ${refBoundaryLabel}.`,
+    `  2. "DOWN" does NOT mean ${asset} crashes to zero ($0) or collapses. There is NO zero strike.`,
+    `  3. You MUST reason about the probability of the price crossing or remaining below the ${refBoundaryLabel} boundary at expiry — NEVER infer a target price of zero from the word DOWN.`,
+    `  4. The proposed side is ${recommendedSide} (${outcome}). Direction: ${direction}. This is internally consistent with predicting "${settlementCondition}".`
+  ].join("\n");
 
   return [
+    `STRUCTURED MARKET & OUTCOME CONTEXT:`,
+    structuredFields,
+    ``,
     `Market Question: "${marketQuestion}"`,
-    yesDesc,
-    noDesc,
-    sideExplanation,
-    directionCheck,
+    rules
   ].join("\n");
 }
